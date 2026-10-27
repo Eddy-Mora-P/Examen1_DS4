@@ -1,42 +1,75 @@
 /* =========================================================================
-   TODO [F5] Maquetación responsiva (mobile first)
-
-   Requisitos:
-   1. .layout
-      - Ancho máximo de 1200px, centrado, con margen interior de 1rem.
-      - En pantallas pequeñas: una sola columna (formulario arriba, listado abajo).
-      - Desde 900px: dos columnas con CSS Grid — formulario de 320px y listado
-        con el resto del espacio. Separación entre columnas de 1.5rem.
-   2. .panel-form
-      - Desde 900px debe quedarse fijo al desplazarse (position: sticky),
-        alineado al inicio de su celda.
-   3. .lista-equipos
-      - Sin viñetas, sin margen ni relleno por omisión.
-      - CSS Grid con tantas columnas como quepan, cada una de mínimo 220px
-        (sin media query: use auto-fill y minmax).
-   4. .barra-listado y .paginacion
-      - Flexbox: elementos en los extremos y centrados verticalmente.
-      - La barra puede pasar a dos líneas si no cabe.
-   5. Ningún elemento debe provocar desplazamiento horizontal a 360px de ancho.
+   F5 - Maquetación responsiva (mobile first)
    ========================================================================= */
 
+* {
+  box-sizing: border-box;
+}
+
 .layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
 }
 
-.panel-form {
-}
-
+.panel-form,
 .panel-listado {
+  width: 100%;
 }
 
 .barra-listado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .lista-equipos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.lista-equipos li {
+  min-width: 0;
 }
 
 .paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-@media (min-width: 900px) {
+img,
+table {
+  max-width: 100%;
+}
+
+@media (min-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .layout,
+  .panel-form,
+  .panel-listado,
+  .barra-listado,
+  .lista-equipos,
+  .paginacion {
+    max-width: 100%;
+  }
 }

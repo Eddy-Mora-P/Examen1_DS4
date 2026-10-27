@@ -5,25 +5,82 @@ const $form = document.querySelector("#form-equipo");
 const $selectCategoria = document.querySelector("#categoria_id");
 const $btnGuardar = document.querySelector("#btn-guardar");
 
-/**
- * TODO [F3] Formulario de registro de equipos.
- *
- * iniciarFormulario({ alGuardar }):
- *  1. Llene el <select id="categoria_id"> con listarCategorias()
- *     (cree cada <option> con createElement, value = id, texto = nombre).
- *  2. Al enviar el formulario (submit):
- *     - Evite el envío tradicional.
- *     - Limpie los errores anteriores: textContent de [data-error] y aria-invalid de los campos.
- *     - Construya el objeto con FormData. categoria_id y costo_interno deben ir como números.
- *     - Deshabilite #btn-guardar y cambie su texto a "Guardando…" mientras espera.
- *     - Llame a crearEquipo(datos).
- *     - Éxito: limpie el formulario, mostrarMensaje("exito", "Equipo <codigo> registrado.")
- *              y llame a alGuardar().
- *     - 422: por cada campo de error.datos.errors, escriba el PRIMER mensaje en
- *            el <p data-error="<campo>"> y marque el campo con aria-invalid="true".
- *     - Otro error: mostrarMensaje("error", ...).
- *     - Siempre (finally): rehabilite el botón y restaure su texto.
- */
+const textoOriginalBoton = $btnGuardar ? $btnGuardar.textContent : "Guardar";
+
 export const iniciarFormulario = ({ alGuardar }) => {
-  // TODO
+  if (!$form || !$selectCategoria || !$btnGuardar) {
+    return;
+  }
+
+  listarCategorias()
+    .then((respuesta) => {
+      const categorias = respuesta?.data ?? respuesta ?? [];
+      categorias.forEach((categoria) => {
+        const opcion = document.createElement("option");
+        opcion.value = categoria.id;
+        opcion.textContent = categoria.nombre;
+        $selectCategoria.appendChild(opcion);
+      });
+    })
+    .catch((error) => {
+      mostrarMensaje("error", error?.message ?? "No se pudieron cargar las categorías.");
+    });
+
+  $form.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+
+    $form.querySelectorAll("[data-error]").forEach((el) => {
+      el.textContent = "";
+    });
+    $form.querySelectorAll("[aria-invalid]").forEach((el) => {
+      el.removeAttribute("aria-invalid");
+    });
+
+    const formData = new FormData($form);
+    const datos = {};
+    for (const [clave, valor] of formData.entries()) {
+      datos[clave] = valor;
+    }
+
+    if (datos.categoria_id !== undefined && datos.categoria_id !== "") {
+      datos.categoria_id = Number(datos.categoria_id);
+    }
+    if (datos.costo_interno !== undefined && datos.costo_interno !== "") {
+      datos.costo_interno = Number(datos.costo_interno);
+    }
+
+    $btnGuardar.disabled = true;
+    $btnGuardar.textContent = "Guardando…";
+
+    try {
+      const respuesta = await crearEquipo(datos);
+      const equipo = respuesta?.data ?? respuesta;
+      $form.reset();
+      mostrarMensaje("exito", `Equipo ${equipo?.codigo ?? ""} registrado.`);
+      if (typeof alGuardar === "function") {
+        alGuardar();
+      }
+    } catch (error) {
+      if (error?.status === 422 && error?.datos?.errors) {
+        const errores = error.datos.errors;
+        Object.keys(errores).forEach((campo) => {
+          const mensajes = errores[campo];
+          const mensaje = Array.isArray(mensajes) ? mensajes[0] : mensajes;
+          const $errorEl = $form.querySelector(`[data-error="${campo}"]`);
+          if ($errorEl) {
+            $errorEl.textContent = mensaje;
+          }
+          const $campoEl = $form.querySelector(`[name="${campo}"]`);
+          if ($campoEl) {
+            $campoEl.setAttribute("aria-invalid", "true");
+          }
+        });
+      } else {
+        mostrarMensaje("error", error?.message ?? "Ocurrió un error al guardar el equipo.");
+      }
+    } finally {
+      $btnGuardar.disabled = false;
+      $btnGuardar.textContent = textoOriginalBoton;
+    }
+  });
 };
